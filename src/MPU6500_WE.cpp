@@ -119,6 +119,10 @@ bool MPU6500_WE::init(uint8_t const expectedValue){
     writeMPU9250Register(REGISTER_INT_PIN_CFG, REGISTER_VALUE_BYPASS_EN);  // Bypass Enable
     delay(10);
     if(whoAmI() != expectedValue){
+        Serial.print("whoAmI():");
+        Serial.print(whoAmI());
+        Serial.print("\texpected:");
+        Serial.println(expectedValue);
         return false;
     }
 
@@ -145,6 +149,12 @@ uint8_t MPU6500_WE::whoAmI(){
     return readMPU9250Register8(REGISTER_WHO_AM_I);
 }
 
+template <typename T>
+int sgn(T val)
+{
+    return (T(0) < val) - (val < T(0));
+}
+
 void MPU6500_WE::autoOffsets(){
     enableGyrDLPF();
     setGyrDLPF(MPU9250_DLPF_6);  // lowest noise
@@ -156,7 +166,7 @@ void MPU6500_WE::autoOffsets(){
 
     xyzFloat accelerationOffsetAccumulator{0.f, 0.f, 0.f};
     xyzFloat gyroOffsetAccumulator{0.f, 0.f, 0.f};
-    for(int i=0; i<50; i++){
+    for(int i=0; i<5; i++){
         // acceleration
         accelerationOffsetAccumulator += getAccRawValues();
         // gyro
@@ -171,6 +181,13 @@ void MPU6500_WE::autoOffsets(){
     // gyro
     gyrOffsetVal = gyroOffsetAccumulator / 50.f;
 
+}
+
+xyzFloat MPU6500_WE::getAccOffset()
+{
+    Serial.println("accOffsets:");
+    Serial.printf("x:%6f\ty:%6f\tz:%6f\n", accOffsetVal.x, accOffsetVal.y, accOffsetVal.z);
+    return accOffsetVal;
 }
 
 void MPU6500_WE::setAccOffsets(float xMin, float xMax, float yMin, float yMax, float zMin, float zMax){
